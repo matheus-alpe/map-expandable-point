@@ -1,0 +1,227 @@
+:root {
+  --ink: #0f172a;
+  --muted: #64748b;
+  --glass: rgb(255 255 255 / 0.82);
+  --leg: rgb(15 23 42 / 0.45);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--ink);
+}
+
+html,
+body,
+#map {
+  margin: 0;
+  height: 100%;
+}
+#map:focus {
+  outline: none;
+}
+
+.card {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  max-width: min(300px, calc(100vw - 88px));
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--glass);
+  backdrop-filter: blur(10px) saturate(1.4);
+  box-shadow: 0 8px 30px rgb(15 23 42 / 0.12);
+  pointer-events: none;
+}
+.card h1 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* ---------- spider ---------- */
+.spider {
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+/* frosted disc so clusters underneath don't read as part of the web */
+.spider::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--r));
+  top: calc(-1 * var(--r));
+  width: calc(2 * var(--r));
+  height: calc(2 * var(--r));
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.75) 60%, rgb(255 255 255 / 0) 100%);
+  backdrop-filter: blur(3px);
+  mask: radial-gradient(circle, #000 60%, transparent 100%);
+  opacity: 0;
+  transform: scale(0.2);
+  transition:
+    transform 450ms var(--spring),
+    opacity 250ms;
+}
+.spider.open::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.spider-legs {
+  position: absolute;
+  overflow: visible;
+  width: 1px; /* Chrome skips painting a 0×0 svg, even with overflow: visible */
+  height: 1px;
+}
+.spider-legs line {
+  stroke: var(--leg);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 380ms ease-out var(--d);
+}
+.spider.spiral .spider-legs line {
+  stroke-opacity: 0.45; /* many legs converge on the hub */
+}
+.spider.open .spider-legs line {
+  stroke-dashoffset: 0;
+}
+
+.spider-leaf {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--leaf);
+  height: var(--leaf);
+  margin: calc(var(--leaf) / -2);
+  padding: 2px; /* category ring */
+  border: 0;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow:
+    0 0 0 1px rgb(15 23 42 / 0.06),
+    0 4px 12px rgb(15 23 42 / 0.22);
+  cursor: pointer;
+  opacity: 0;
+  transform: translate(0, 0) scale(0.3);
+  transition:
+    transform 520ms var(--spring) var(--d),
+    opacity 200ms ease-out var(--d),
+    box-shadow 150ms;
+}
+.spider-leaf img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+  pointer-events: none;
+}
+.spider.open .spider-leaf {
+  opacity: 1;
+  transform: translate(var(--x), var(--y)) scale(1);
+}
+.spider.open .spider-leaf:hover,
+.spider.open .spider-leaf:focus-visible {
+  transform: translate(var(--x), var(--y)) scale(1.18);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent),
+    0 6px 16px rgb(15 23 42 / 0.28);
+  outline: none;
+  z-index: 1;
+  transition-delay: 0ms;
+  transition-duration: 180ms;
+}
+
+.spider-hub {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin: -13px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font: 600 16px/1 system-ui, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.35);
+  transform: scale(1.6) rotate(-90deg);
+  opacity: 0;
+  transition:
+    transform 420ms var(--spring),
+    opacity 200ms;
+}
+.spider.open .spider-hub {
+  transform: scale(1) rotate(0);
+  opacity: 1;
+}
+.spider-hub:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* collapse fast and together, no stagger */
+.spider.closing::before,
+.spider.closing .spider-leaf,
+.spider.closing .spider-legs line,
+.spider.closing .spider-hub {
+  transition-delay: 0ms;
+  transition-duration: 220ms;
+  transition-timing-function: ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spider *,
+  .spider::before,
+  .spider-legs line {
+    transition: none !important;
+  }
+}
+
+/* ---------- popup ---------- */
+.maplibregl-popup {
+  z-index: 3; /* above the spider */
+}
+.maplibregl-popup-content {
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 0.18);
+}
+.pop {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.pop-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--c);
+  grid-row: span 2;
+}
+.pop small {
+  color: var(--muted);
+  grid-column: 2 / 4;
+}
+.pop-cat {
+  grid-row: 1;
+  grid-column: 3;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  text-transform: capitalize;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
